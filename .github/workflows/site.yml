@@ -97,7 +97,11 @@ jobs:
           check /                    "jacopozanti/ui"
           check /components          "Components"
           check /components/dialog   "bg-preview"
-          check /tokens              "--background"
+          # `oklch(` and not a token name: the page writes names as `--{name}`,
+          # and React separates adjacent text nodes with an HTML comment, so the
+          # markup reads `--<!-- -->background`. This asserts a rendered value,
+          # which comes from a single expression and survives intact.
+          check /tokens              "oklch("
           check /robots.txt          "Sitemap"
           exit $fail
 
