@@ -1,12 +1,58 @@
+"use client"
+
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
+import { motion, type Variants } from "motion/react"
 import { cn } from "cn"
 
 import { Button } from "@/components/ui/button"
+import {
+  MotionOverlayProvider,
+  forMotion,
+  backdropVariants,
+  exitFast,
+  spring,
+  useOverlayActionsRef,
+  useOverlayMotion,
+} from "@/lib/motion"
 import { XIcon } from "lucide-react"
 
+/*
+ * The dialog's own movement: it scales up from just under full size and drifts
+ * the last couple of percent upward, on the `heavy` spring — a large surface
+ * that settles rather than snaps. Centering lives in the variants, not in a
+ * `-translate-x-1/2` class: Motion writes `transform` inline, and a Tailwind
+ * translate on the same element would be overwritten the moment it animates.
+ */
+const contentVariants: Variants = {
+  open: {
+    opacity: 1,
+    scale: 1,
+    x: "-50%",
+    y: "-50%",
+    transition: spring.heavy,
+  },
+  closed: {
+    opacity: 0,
+    scale: 0.96,
+    x: "-50%",
+    y: "-48%",
+    transition: exitFast,
+  },
+}
+
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+  return (
+    <MotionOverlayProvider>
+      <DialogRoot {...props} />
+    </MotionOverlayProvider>
+  )
+}
+
+function DialogRoot({ ...props }: DialogPrimitive.Root.Props) {
+  // Inside the provider, so the popup can defer its own unmount.
+  const actionsRef = useOverlayActionsRef<DialogPrimitive.Root.Actions>()
+  return <DialogPrimitive.Root data-slot="dialog" actionsRef={actionsRef} {...props} />
 }
 
 function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
@@ -14,6 +60,10 @@ function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
 }
 
 function DialogPortal({ ...props }: DialogPrimitive.Portal.Props) {
+  // No `keepMounted`: the popup mounts when it opens and stays until the
+  // closing animation calls `unmount()` through the actions ref. Keeping it
+  // mounted as well would contradict that — the element would never leave, and
+  // every dialog on the page would sit in the DOM waiting.
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
 }
 
@@ -21,16 +71,21 @@ function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
 }
 
-function DialogOverlay({
-  className,
-  ...props
-}: DialogPrimitive.Backdrop.Props) {
+function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) {
   return (
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate z-50 bg-black/10 supports-backdrop-filter:backdrop-blur-xs",
         className
+      )}
+      render={(renderProps, state) => (
+        <motion.div
+          {...forMotion(renderProps)}
+          initial="closed"
+          animate={state.open ? "open" : "closed"}
+          variants={backdropVariants}
+        />
       )}
       {...props}
     />
@@ -51,8 +106,11 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 rounded-xl bg-popover p-6 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] gap-6 rounded-xl bg-popover p-6 text-sm text-popover-foreground ring-1 ring-foreground/10 outline-none sm:max-w-md",
           className
+        )}
+        render={(renderProps, state) => (
+          <DialogPopup {...forMotion(renderProps)} open={state.open} />
         )}
         {...props}
       >
@@ -68,14 +126,25 @@ function DialogContent({
               />
             }
           >
-            <XIcon
-            />
+            <XIcon />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Popup>
     </DialogPortal>
   )
+}
+
+/**
+ * Split out because the unmount hook has to run inside the popup's own render —
+ * calling it in DialogContent's body would tie it to the wrong lifecycle.
+ */
+function DialogPopup({
+  open,
+  ...props
+}: React.ComponentProps<typeof motion.div> & { open: boolean }) {
+  const overlay = useOverlayMotion(open)
+  return <motion.div {...props} {...overlay} variants={contentVariants} />
 }
 
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {

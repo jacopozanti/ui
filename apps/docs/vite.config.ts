@@ -25,6 +25,8 @@ export default defineConfig({
 			"class-variance-authority",
 			"cn",
 			"lucide-react",
+			"motion",
+			"motion/react",
 		],
 		alias: {
 			/*
