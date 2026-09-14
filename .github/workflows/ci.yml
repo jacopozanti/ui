@@ -3,6 +3,9 @@ name: CI
 on:
   push:
     branches: [main]
+  # Deliberately unfiltered: this check is required before a pull request can
+  # merge, and a required check that never runs leaves the PR waiting for it
+  # forever — a PR touching only the README would deadlock.
   pull_request:
 
 jobs:
