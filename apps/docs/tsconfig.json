@@ -31,6 +31,8 @@
       "class-variance-authority": ["./node_modules/class-variance-authority"],
       "class-variance-authority/*": ["./node_modules/class-variance-authority/*"],
       "lucide-react": ["./node_modules/lucide-react"],
+      "motion": ["./node_modules/motion"],
+      "motion/*": ["./node_modules/motion/*"],
       "@jacopozanti/ui": ["../../src/index.ts"],
       "@jacopozanti/ui/*": ["../../src/components/ui/*"]
     },
