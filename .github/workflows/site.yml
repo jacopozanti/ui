@@ -14,6 +14,7 @@ on:
     paths:
       - "apps/**"
       - "src/**"
+      - "Dockerfile"
       - ".github/workflows/site.yml"
   # No `paths` filter here, unlike the push trigger: these checks are required
   # before a pull request can merge, and a required check that never runs leaves
@@ -45,3 +46,60 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # The deploy image, built and actually run.
+  #
+  # `build` above cannot catch what broke the first deploy: Vite resolved the
+  # library's internal imports through a tsconfig that exists in a checkout and
+  # not in the image, so the two produced different bundles from the same
+  # commit. Only building the real image finds that class of bug — and only
+  # starting it finds the version where the build succeeds and the bundle is
+  # broken anyway, which is what externalized imports produce.
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the image
+        run: docker build -t jz-ui-docs:ci .
+
+      - name: Serve it
+        run: |
+          docker run -d --name docs -p 3000:3000 jz-ui-docs:ci
+          # The server binds after nitro boots; give it a bounded wait rather
+          # than a fixed sleep, so a slow runner does not fail the job and a
+          # dead container does not hang it.
+          for i in $(seq 1 30); do
+            curl -sf -o /dev/null http://localhost:3000/ && break
+            sleep 1
+          done
+
+      - name: Check it serves real pages
+        run: |
+          set -euo pipefail
+          fail=0
+          check() {
+            body=$(curl -sf --max-time 10 "http://localhost:3000$1") || {
+              echo "FAIL $1 — no response"; fail=1; return
+            }
+            if ! grep -q "$2" <<<"$body"; then
+              echo "FAIL $1 — missing '$2'"; fail=1; return
+            fi
+            echo "ok   $1"
+          }
+          # One page per route shape, each asserting content only a working
+          # bundle produces — a 200 on an error shell would otherwise pass.
+          check /                    "jacopozanti/ui"
+          check /components          "Components"
+          check /components/dialog   "bg-preview"
+          check /tokens              "--background"
+          check /robots.txt          "Sitemap"
+          exit $fail
+
+      - name: Container logs on failure
+        if: failure()
+        run: docker logs docs
+
+      - name: Stop the container
+        if: always()
+        run: docker rm -f docs
