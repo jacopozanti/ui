@@ -1,0 +1,18 @@
+# Source is text, even when a stray byte says otherwise.
+#
+# Git decides text-or-binary by looking for a NUL in the first few KB. One
+# such byte — a typo, a bad paste — and the file stops having diffs: reviews
+# show "Binary file not shown", `git grep` answers without a line, and two
+# branches touching it can only conflict whole, since there is no three-way
+# merge for a binary. `use-dev-warnings.ts` spent two months that way.
+#
+# `diff` alone, not `text`: this settles how git *shows* these files and
+# nothing else. `text` would also turn on end-of-line normalisation, which
+# would rewrite working copies that have nothing wrong with them.
+*.ts    diff
+*.tsx   diff
+*.mjs   diff
+*.css   diff
+*.json  diff
+*.md    diff
+*.yml   diff
