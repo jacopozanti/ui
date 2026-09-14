@@ -2,6 +2,7 @@ import {
 	Button,
 	DropdownMenu,
 	DropdownMenuContent,
+	DropdownMenuGroup,
 	DropdownMenuItem,
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
@@ -16,13 +17,17 @@ export default function Demo() {
 				Open menu
 			</DropdownMenuTrigger>
 			<DropdownMenuContent className="w-48">
-				<DropdownMenuLabel>Account</DropdownMenuLabel>
-				<DropdownMenuSeparator />
-				<DropdownMenuItem>
-					Profile
-					<DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-				</DropdownMenuItem>
-				<DropdownMenuItem>Settings</DropdownMenuItem>
+				{/* Base UI requires a group around its label: `DropdownMenuLabel` is
+				    `Menu.GroupLabel`, and it throws without one. */}
+				<DropdownMenuGroup>
+					<DropdownMenuLabel>Account</DropdownMenuLabel>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem>
+						Profile
+						<DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+					</DropdownMenuItem>
+					<DropdownMenuItem>Settings</DropdownMenuItem>
+				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem variant="destructive">Sign out</DropdownMenuItem>
 			</DropdownMenuContent>

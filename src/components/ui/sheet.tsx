@@ -1,12 +1,32 @@
 import * as React from "react"
 import { Dialog as SheetPrimitive } from "@base-ui/react/dialog"
+import { motion } from "motion/react"
 import { cn } from "cn"
+
+import {
+  MotionOverlayProvider,
+  backdropVariants,
+  forMotion,
+  sheetVariants,
+  useOverlayActionsRef,
+  useOverlayMotion,
+} from "@/lib/motion"
 
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
 function Sheet({ ...props }: SheetPrimitive.Root.Props) {
-  return <SheetPrimitive.Root data-slot="sheet" {...props} />
+  return (
+    <MotionOverlayProvider>
+      <SheetRoot {...props} />
+    </MotionOverlayProvider>
+  )
+}
+
+function SheetRoot({ ...props }: SheetPrimitive.Root.Props) {
+  // Inside the provider, so the panel can defer its own unmount.
+  const actionsRef = useOverlayActionsRef<SheetPrimitive.Root.Actions>()
+  return <SheetPrimitive.Root data-slot="sheet" actionsRef={actionsRef} {...props} />
 }
 
 function SheetTrigger({ ...props }: SheetPrimitive.Trigger.Props) {
@@ -28,6 +48,14 @@ function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
       className={cn(
         "fixed inset-0 z-50 bg-black/10 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs",
         className
+      )}
+      render={(renderProps, state) => (
+        <motion.div
+          {...forMotion(renderProps)}
+          initial="closed"
+          animate={state.open ? "open" : "closed"}
+          variants={backdropVariants}
+        />
       )}
       {...props}
     />
@@ -51,8 +79,11 @@ function SheetContent({
         data-slot="sheet-content"
         data-side={side}
         className={cn(
-          "fixed z-50 flex flex-col gap-4 bg-popover bg-clip-padding text-sm text-popover-foreground shadow-lg transition duration-200 ease-in-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=bottom]:data-ending-style:translate-y-[2.5rem] data-[side=bottom]:data-starting-style:translate-y-[2.5rem] data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=left]:data-ending-style:translate-x-[-2.5rem] data-[side=left]:data-starting-style:translate-x-[-2.5rem] data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=right]:data-ending-style:translate-x-[2.5rem] data-[side=right]:data-starting-style:translate-x-[2.5rem] data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=top]:data-ending-style:translate-y-[-2.5rem] data-[side=top]:data-starting-style:translate-y-[-2.5rem] data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm",
+          "fixed z-50 flex flex-col gap-4 bg-popover bg-clip-padding text-sm text-popover-foreground shadow-lg data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=bottom]:data-ending-style:translate-y-[2.5rem] data-[side=bottom]:data-starting-style:translate-y-[2.5rem] data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=left]:data-ending-style:translate-x-[-2.5rem] data-[side=left]:data-starting-style:translate-x-[-2.5rem] data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=right]:data-ending-style:translate-x-[2.5rem] data-[side=right]:data-starting-style:translate-x-[2.5rem] data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=top]:data-ending-style:translate-y-[-2.5rem] data-[side=top]:data-starting-style:translate-y-[-2.5rem] data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm",
           className
+        )}
+        render={(renderProps, state) => (
+          <SheetPopup {...forMotion(renderProps)} open={state.open} side={side} />
         )}
         {...props}
       >
@@ -119,6 +150,20 @@ function SheetDescription({
       {...props}
     />
   )
+}
+
+/** The unmount hook has to run inside the panel's own render. */
+function SheetPopup({
+  open,
+  side,
+  ...props
+}: React.ComponentProps<typeof motion.div> & {
+  open: boolean
+  side: "top" | "right" | "bottom" | "left"
+}) {
+  const overlay = useOverlayMotion(open)
+  const variants = React.useMemo(() => sheetVariants(side), [side])
+  return <motion.div {...props} {...overlay} variants={variants} />
 }
 
 export {

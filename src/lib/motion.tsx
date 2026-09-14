@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import type { Transition, Variants } from "motion/react"
+import { motion, type Transition, type Variants } from "motion/react"
 
 /**
  * The library's motion system.
@@ -128,4 +128,87 @@ export function useOverlayMotion(open: boolean) {
     [actionsRef],
   )
   return { initial: "closed", animate: open ? "open" : "closed", onAnimationComplete }
+}
+
+/**
+ * Where a popup comes from, given the side of its anchor it sits on: a menu
+ * below its trigger rises the last few pixels into place, one above it sinks.
+ * Small — four pixels — because `--transform-origin` already makes the scale
+ * grow out of the trigger, and the offset only has to confirm the direction.
+ */
+function offsetFor(side: string) {
+  switch (side) {
+    case "top":
+      return { y: 4 }
+    case "bottom":
+      return { y: -4 }
+    case "left":
+    case "inline-start":
+      return { x: 4 }
+    case "right":
+    case "inline-end":
+      return { x: -4 }
+    default:
+      return {}
+  }
+}
+
+export function popupVariants(side: string, transition: Transition = spring.soft): Variants {
+  return {
+    open: { opacity: 1, scale: 1, x: 0, y: 0, transition },
+    closed: { opacity: 0, scale: 0.96, ...offsetFor(side), transition: exitFast },
+  }
+}
+
+/**
+ * The body of every anchored popup — menus, popovers, tooltips, selects. Each
+ * one still chooses its own spring; what they share is the shape of the
+ * gesture, so a dropdown and a select do not feel like two different products.
+ *
+ * Pair with `<MotionOverlayProvider>` and an `actionsRef` on the root, or the
+ * popup will vanish instead of leaving.
+ */
+export function MotionPopup({
+  open,
+  side,
+  transition,
+  ...props
+}: React.ComponentProps<typeof motion.div> & {
+  open: boolean
+  side: string
+  transition?: Transition
+}) {
+  const overlay = useOverlayMotion(open)
+  const variants = React.useMemo(() => popupVariants(side, transition), [side, transition])
+  return <motion.div {...props} {...overlay} variants={variants} />
+}
+
+/**
+ * A centred modal surface: it scales up from just under full size and drifts
+ * the last couple of percent upward. Centering lives here, not in a
+ * `-translate-x-1/2` class — Motion writes `transform` inline, and a Tailwind
+ * translate on the same element is overwritten the moment it animates.
+ */
+export const modalVariants: Variants = {
+  open: { opacity: 1, scale: 1, x: "-50%", y: "-50%", transition: spring.heavy },
+  closed: { opacity: 0, scale: 0.96, x: "-50%", y: "-48%", transition: exitFast },
+}
+
+/**
+ * A panel anchored to an edge. It slides in from its own side by 40px rather
+ * than from fully off-screen: the distance reads as "it was just there", and a
+ * full-width slide on a large screen is a long way to travel for no extra
+ * meaning.
+ */
+export function sheetVariants(side: "top" | "right" | "bottom" | "left"): Variants {
+  const from = {
+    top: { y: -40 },
+    bottom: { y: 40 },
+    left: { x: -40 },
+    right: { x: 40 },
+  }[side]
+  return {
+    open: { opacity: 1, x: 0, y: 0, transition: spring.heavy },
+    closed: { opacity: 0, ...from, transition: exitFast },
+  }
 }

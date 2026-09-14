@@ -1,10 +1,28 @@
 import * as React from "react"
 import { Menu as MenuPrimitive } from "@base-ui/react/menu"
 import { cn } from "cn"
+
+import {
+  MotionOverlayProvider,
+  MotionPopup,
+  forMotion,
+  spring,
+  useOverlayActionsRef,
+} from "@/lib/motion"
 import { ChevronRightIcon, CheckIcon } from "lucide-react"
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
-  return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+  return (
+    <MotionOverlayProvider>
+      <DropdownMenuRoot {...props} />
+    </MotionOverlayProvider>
+  )
+}
+
+function DropdownMenuRoot({ ...props }: MenuPrimitive.Root.Props) {
+  // Inside the provider, so the popup can defer its own unmount.
+  const actionsRef = useOverlayActionsRef<MenuPrimitive.Root.Actions>()
+  return <MenuPrimitive.Root data-slot="dropdown-menu" actionsRef={actionsRef} {...props} />
 }
 
 function DropdownMenuPortal({ ...props }: MenuPrimitive.Portal.Props) {
@@ -38,7 +56,15 @@ function DropdownMenuContent({
       >
         <MenuPrimitive.Popup
           data-slot="dropdown-menu-content"
-          className={cn("z-50 max-h-(--available-height) w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-md bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 outline-none data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:overflow-hidden data-closed:fade-out-0 data-closed:zoom-out-95", className )}
+          className={cn("z-50 max-h-(--available-height) w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-md bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-none data-closed:overflow-hidden", className )}
+          render={(renderProps, state) => (
+            <MotionPopup
+              {...forMotion(renderProps)}
+              open={state.open}
+              side={state.side}
+              transition={spring.soft}
+            />
+          )}
           {...props}
         />
       </MenuPrimitive.Positioner>
