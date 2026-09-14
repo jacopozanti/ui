@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
-import { motion, type Variants } from "motion/react"
+import { motion } from "motion/react"
 import { cn } from "cn"
 
 import { Button } from "@/components/ui/button"
@@ -10,36 +10,13 @@ import {
   MotionOverlayProvider,
   forMotion,
   backdropVariants,
+  modalVariants,
   exitFast,
   spring,
   useOverlayActionsRef,
   useOverlayMotion,
 } from "@/lib/motion"
 import { XIcon } from "lucide-react"
-
-/*
- * The dialog's own movement: it scales up from just under full size and drifts
- * the last couple of percent upward, on the `heavy` spring — a large surface
- * that settles rather than snaps. Centering lives in the variants, not in a
- * `-translate-x-1/2` class: Motion writes `transform` inline, and a Tailwind
- * translate on the same element would be overwritten the moment it animates.
- */
-const contentVariants: Variants = {
-  open: {
-    opacity: 1,
-    scale: 1,
-    x: "-50%",
-    y: "-50%",
-    transition: spring.heavy,
-  },
-  closed: {
-    opacity: 0,
-    scale: 0.96,
-    x: "-50%",
-    y: "-48%",
-    transition: exitFast,
-  },
-}
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return (
@@ -144,7 +121,7 @@ function DialogPopup({
   ...props
 }: React.ComponentProps<typeof motion.div> & { open: boolean }) {
   const overlay = useOverlayMotion(open)
-  return <motion.div {...props} {...overlay} variants={contentVariants} />
+  return <motion.div {...props} {...overlay} variants={modalVariants} />
 }
 
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
