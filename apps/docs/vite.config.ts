@@ -36,6 +36,17 @@ export default defineConfig({
 			 * the package is built from.
 			 */
 			"@jacopozanti/ui": `${repoRoot}src/index.ts`,
+			/*
+			 * The library's files import each other with "@/". Vite would resolve
+			 * that through the `paths` of the nearest tsconfig — the library's own,
+			 * which exists in a checkout but NOT in the Docker image, where only
+			 * package.json and src/ are copied. The build then "resolved" those
+			 * imports by externalizing them, and shipped a bundle that breaks at
+			 * runtime. Stating the alias here makes local, CI and Docker agree.
+			 *
+			 * This app imports its own modules with "#/", so "@/" is unambiguous.
+			 */
+			"@/": `${repoRoot}src/`,
 		},
 	},
 	// The library's sources live outside this app's root; Vite needs permission
