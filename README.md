@@ -120,6 +120,25 @@ rest of the library does not need — add them if and when you want them:
 `form`, `attachment`, `bubble`, `marker`, `message` and `message-scroller` are not available
 on this style at all — shadcn ships them only for Radix and React Aria.
 
+## Working on this repo
+
+`main` is protected by a ruleset: no direct pushes, no force pushes, no
+deletion, and both CI checks green before a pull request can merge. Reviews are
+not required — GitHub does not let you approve your own pull request, so on a
+solo repo any non-zero count would deadlock every PR; the gate is the test
+suite instead.
+
+```bash
+git switch -c fix/something
+git push -u origin fix/something && gh pr create --fill
+gh pr merge --squash --delete-branch   # once the checks pass
+```
+
+Repository admins can bypass the rules, which is what makes an emergency fix —
+or a repair to a CI that is itself broken — possible without disabling
+anything. Treat it as the exception it is: a bypassed push skips the checks
+that would have caught the thing you are in a hurry about.
+
 ## Development
 
 ```bash
