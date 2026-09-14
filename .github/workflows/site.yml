@@ -1,0 +1,46 @@
+name: Site
+
+# The docs app installs independently of the library — its own package.json,
+# lockfile and node_modules — so it gets its own workflow: a change to a
+# component must not run the library's test suite, and a change to the site must
+# not rebuild the package.
+#
+# But `src/**` is in the paths, unlike a site that consumes a published package:
+# this one renders the library from source (apps/docs/vite.config.ts), so a
+# change upstairs can break it and has to build it.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/**"
+      - "src/**"
+      - ".github/workflows/site.yml"
+  pull_request:
+    paths:
+      - "apps/**"
+      - "src/**"
+      - ".github/workflows/site.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/docs
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: apps/docs/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build

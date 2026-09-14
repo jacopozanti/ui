@@ -1,0 +1,48 @@
+{
+  "include": ["**/*.ts", "**/*.tsx"],
+  "compilerOptions": {
+    "target": "ES2022",
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "paths": {
+      "#/*": ["./src/*"],
+      // The library's own files import themselves with "@/", and they are pulled
+      // into this project through the alias below. This app uses "#/" for its
+      // own modules, so "@/" belongs to the library.
+      "@/*": ["../../src/*"],
+      // The library installs its own @types/react, and two copies of those types
+      // are two unrelated `ReactNode`s as far as tsc is concerned — every
+      // component the site imports then fails to accept its own props. Pin both
+      // trees to this app's copy.
+      "react": ["./node_modules/@types/react"],
+      "react/*": ["./node_modules/@types/react/*"],
+      "react-dom": ["./node_modules/@types/react-dom"],
+      "react-dom/*": ["./node_modules/@types/react-dom/*"],
+      "@jacopozanti/ui": ["../../src/index.ts"],
+      "@jacopozanti/ui/*": ["../../src/components/ui/*"]
+    },
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+
+    /* Linting */
+    "skipLibCheck": true,
+    "strict": true,
+    /*
+     * Off, not by preference: the library's files are pulled into this project
+     * through the "@/" alias above and are checked with it, and one of them
+     * (scroll-area.tsx) carries an unused React import straight from the shadcn
+     * registry. Keeping the components unforked is worth more than this rule,
+     * and tsc cannot scope it to a subtree.
+     */
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  }
+}

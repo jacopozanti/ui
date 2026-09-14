@@ -1,0 +1,20 @@
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+.env
+.nitro
+.tanstack
+.wrangler
+.output
+.vinxi
+__unconfig*
+todos.json
+
+# Generated from the library's own sources by scripts/generate.mjs, which
+# `predev`/`prebuild`/`pretypecheck` always run. Committing them would mean a
+# diff on every component edit and two sources of truth.
+src/generated/
+public/sitemap.xml
+public/robots.txt

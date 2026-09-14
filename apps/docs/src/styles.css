@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+/* The overlay components' enter/exit animations (see the library's README). */
+@import "tw-animate-css";
+
+/*
+ * The library's own tokens, read from source rather than from `dist`: this site
+ * documents the repo it lives in. The `@source` below is what makes Tailwind
+ * generate the utilities the components use — the shipped `theme.css` carries an
+ * `@source` pointing at `dist`, which resolves to nothing when imported from
+ * source like this.
+ */
+@import "../../../src/styles/theme.css";
+@source "../../../src/components";
+
+/* A single site-specific token: the grid behind the component previews. */
+@theme inline {
+	--color-preview: color-mix(in oklab, var(--foreground) 2%, var(--background));
+}
+
+@layer base {
+	body {
+		background-color: var(--color-background);
+		color: var(--color-foreground);
+		font-synthesis-weight: none;
+		text-rendering: optimizeLegibility;
+	}
+}
+
+/*
+ * Shiki emits both palettes as CSS variables (`defaultColor: false`), so a code
+ * block follows the theme toggle without being re-highlighted on the client.
+ */
+.shiki,
+.shiki span {
+	color: var(--shiki-light);
+	background-color: var(--shiki-light-bg);
+}
+
+.dark .shiki,
+.dark .shiki span {
+	color: var(--shiki-dark);
+	background-color: var(--shiki-dark-bg);
+}
+
+.shiki {
+	overflow-x: auto;
+	padding: 1rem;
+	font-size: 0.8125rem;
+	line-height: 1.6;
+	tab-size: 2;
+}
