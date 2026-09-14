@@ -79,10 +79,15 @@ jobs:
           set -euo pipefail
           fail=0
           check() {
-            body=$(curl -sf --max-time 10 "http://localhost:3000$1") || {
+            # `tr -d '\0'`: the HTML carries stray null bytes and command
+            # substitution warns on every one of them. pipefail keeps curl's
+            # exit status visible through the pipe.
+            body=$(curl -sf --max-time 10 "http://localhost:3000$1" | tr -d '\0') || {
               echo "FAIL $1 — no response"; fail=1; return
             }
-            if ! grep -q "$2" <<<"$body"; then
+            # `--` before the pattern: one of them is "--background", which grep
+            # would otherwise read as an option and reject.
+            if ! grep -q -- "$2" <<<"$body"; then
               echo "FAIL $1 — missing '$2'"; fail=1; return
             fi
             echo "ok   $1"
