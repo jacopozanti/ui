@@ -18,6 +18,19 @@
       "react/*": ["./node_modules/@types/react/*"],
       "react-dom": ["./node_modules/@types/react-dom"],
       "react-dom/*": ["./node_modules/@types/react-dom/*"],
+      /*
+       * Same reason, one step further: the library's files import these by bare
+       * name, and tsc resolves them by walking up from *their* directory. That
+       * finds the library's own node_modules — which exists on a dev machine
+       * that has run `npm install` upstairs, and does not exist in CI, where
+       * only this app is installed. Pin them, so the two agree.
+       */
+      "cn": ["./node_modules/cn"],
+      "@base-ui/react": ["./node_modules/@base-ui/react"],
+      "@base-ui/react/*": ["./node_modules/@base-ui/react/*"],
+      "class-variance-authority": ["./node_modules/class-variance-authority"],
+      "class-variance-authority/*": ["./node_modules/class-variance-authority/*"],
+      "lucide-react": ["./node_modules/lucide-react"],
       "@jacopozanti/ui": ["../../src/index.ts"],
       "@jacopozanti/ui/*": ["../../src/components/ui/*"]
     },
