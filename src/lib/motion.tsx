@@ -227,3 +227,48 @@ export function sheetVariants(side: "top" | "right" | "bottom" | "left"): Varian
     closed: { opacity: 0, ...from, transition: exitFast },
   }
 }
+
+const panelVariants: Variants = {
+  open: { height: "auto", opacity: 1, transition: spring.soft },
+  closed: { height: 0, opacity: 0, transition: exitFast },
+}
+
+/**
+ * A disclosure panel that collapses to its content height and back — the body
+ * of an accordion item or a collapsible.
+ *
+ * Base UI marks a closed panel `hidden`, which is `display: none`: nothing
+ * left to animate. Dropping that attribute would let the height reach zero,
+ * but a zero-height panel is still in the tab order and still read aloud —
+ * invisible content a keyboard user can land in. So `hidden` is managed here
+ * instead: gone the moment the panel opens (Motion needs it displayed to
+ * measure `auto`), back only once the closing animation has finished.
+ *
+ * Padding belongs on a child, never on this element. With border-box sizing a
+ * padded box cannot be shorter than its padding, so it would stop collapsing a
+ * few pixels short and leave a sliver showing.
+ */
+export function MotionPanel({
+  open,
+  hidden: _baseHidden,
+  ...props
+}: React.ComponentProps<typeof motion.div> & { open: boolean }) {
+  const [collapsed, setCollapsed] = React.useState(!open)
+  // Adjusting state during render, React's pattern for state derived from a
+  // prop: opening must un-hide before paint, or `auto` measures as zero.
+  if (open && collapsed) setCollapsed(false)
+
+  return (
+    <motion.div
+      {...props}
+      hidden={collapsed}
+      initial={false}
+      animate={open ? "open" : "closed"}
+      variants={panelVariants}
+      style={{ overflow: "hidden", ...props.style }}
+      onAnimationComplete={(definition) => {
+        if (definition === "closed") setCollapsed(true)
+      }}
+    />
+  )
+}
