@@ -1,8 +1,10 @@
 "use client"
 
 import { Checkbox as CheckboxPrimitive } from "@base-ui/react/checkbox"
+import { motion } from "motion/react"
 import { cn } from "cn"
-import { CheckIcon } from "lucide-react"
+
+import { exitFast, spring } from "@/lib/motion"
 
 function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
   return (
@@ -15,13 +17,43 @@ function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
       {...props}
     >
       <CheckboxPrimitive.Indicator
+        // Kept mounted so the tick can undraw on uncheck, instead of vanishing.
+        keepMounted
         data-slot="checkbox-indicator"
-        className="grid place-content-center text-current transition-none [&>svg]:size-3.5"
-      >
-        <CheckIcon
-        />
-      </CheckboxPrimitive.Indicator>
+        className="grid place-content-center text-current [&>svg]:size-3.5"
+        render={(renderProps, state) => (
+          <span {...renderProps}>
+            <Tick checked={state.checked} />
+          </span>
+        )}
+      />
     </CheckboxPrimitive.Root>
+  )
+}
+
+/**
+ * The tick draws itself rather than appearing. lucide's check path runs from
+ * the long stroke to the short one; this one is reversed, so `pathLength`
+ * draws it the way a hand would — down into the corner, then up and out.
+ */
+function Tick({ checked }: { checked: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <motion.path
+        d="M4 12l5 5L20 6"
+        initial={false}
+        animate={{ pathLength: checked ? 1 : 0, opacity: checked ? 1 : 0 }}
+        transition={checked ? spring.snappy : exitFast}
+      />
+    </svg>
   )
 }
 
