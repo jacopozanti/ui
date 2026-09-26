@@ -108,7 +108,7 @@ function ComponentPage() {
 			<section className="mt-8">
 				<h2 className="mb-2 text-sm font-medium">Source</h2>
 				<p className="mb-2 text-sm text-muted-foreground">
-					Exactly what is in the repo — the library does not fork what shadcn publishes.
+					Exactly what is in the repo: started from the shadcn registry, then rewritten around Motion.
 				</p>
 				<CodeBlock html={component.sourceHtml} />
 			</section>

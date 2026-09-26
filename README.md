@@ -1,12 +1,18 @@
 # @jacopozanti/ui
 
 Personal UI library: [shadcn/ui](https://ui.shadcn.com) components on the `base-vega` style
-([Base UI](https://base-ui.com) primitives) and Tailwind v4, shipped as a compiled npm
-package instead of a registry — you install it and import it, you don't copy the source
-into your app.
+([Base UI](https://base-ui.com) primitives) and Tailwind v4, animated with
+[Motion](https://motion.dev), shipped as a compiled npm package instead of a registry — you
+install it and import it, you don't copy the source into your app.
 
-Components are kept **as shadcn publishes them**. Local changes are a fork, and forks make
-`shadcn add` upgrades painful, so anything project-specific belongs in the consuming app.
+**Motion is at the centre.** Every component with a state to change moves in its own way —
+the checkbox tick draws itself, the tabs indicator slides between tabs, the switch thumb
+travels by layout, menus grow out of their trigger — and they share one set of timings, so
+they still read as one library. See [Motion](#motion) below.
+
+This means the components are **forked from shadcn**: they started from the registry and
+were then rewritten around Motion, so `shadcn add` can no longer be used to update one in
+place. An upstream fix has to be carried over by hand.
 
 ## Install
 
@@ -14,7 +20,7 @@ Components are kept **as shadcn publishes them**. Local changes are a fork, and 
 npm install @jacopozanti/ui
 ```
 
-**49 components**, added with the CLI and kept as shadcn publishes them.
+**49 components**, started from the shadcn CLI and adapted for Motion.
 
 Requires **React 19** (`react` and `react-dom` are peer dependencies). Components are written
 the way shadcn writes them today — plain function components taking `ref` as a prop — which
@@ -92,9 +98,42 @@ rule — a library has no business painting the host's page.
 
 Dark mode is driven by a `.dark` class on any ancestor, not just `<html>`.
 
+## Motion
+
+`src/lib/motion.tsx` treats animation as a token set, like colour and radius: components do
+not invent timings, they pick a named spring.
+
+| token | for | character |
+|---|---|---|
+| `snappy` | checkboxes, switches, tooltips, presses | quick, no overshoot |
+| `soft` | popovers, menus, selects, panels | the default for anything that appears |
+| `heavy` | dialogs, sheets | a large surface that settles |
+| `bouncy` | the radio dot | deliberate overshoot |
+| `linear` | progress | continuous values, which a spring would overshoot |
+
+Two rules hold everywhere: **exit is faster than enter**, and backdrops only fade.
+
+Base UI unmounts a popup the instant it closes, which would leave nothing to animate out.
+Overlays hand that decision back through `actionsRef` and unmount only once the closing
+animation has finished — `MotionOverlayProvider` and `MotionPopup` carry that for every
+anchored popup, `MotionPanel` does the equivalent for accordions and collapsibles while
+keeping closed panels out of the tab order.
+
+A few components deliberately stay on CSS, because Base UI drives the very property Motion
+would animate:
+
+| component | why it stays on CSS |
+|---|---|
+| `drawer` | Base UI writes transforms itself to follow the swipe |
+| `navigation-menu` | its popup morphs width and height between items in one CSS transition |
+| `toast` | stacking and swipe-to-dismiss are computed from CSS variables Base UI updates |
+| `skeleton`, `spinner` | infinite loops, which CSS runs on the compositor without JavaScript |
+
+Submenus close without an exit animation: Base UI unmounts them on its own schedule.
+
 ## Adding a component
 
-`components.json` is configured, so the CLI works as it does in an app:
+`components.json` is still configured, so the CLI works as a starting point:
 
 ```bash
 npx shadcn@latest add dialog
@@ -102,7 +141,9 @@ npx shadcn@latest add dialog
 
 It writes `src/components/ui/dialog.tsx` with `@/...` imports. Then add its
 `export * from "@/components/ui/dialog";` line to `src/index.ts` (keep it sorted) and a test
-under `tests/`.
+under `tests/`, and animate it through `src/lib/motion.tsx` rather than with CSS keyframes —
+strip the `animate-in` / `data-starting-style` classes it arrives with, or they will run
+against Motion's transform.
 
 What is deliberately **not** installed, because each one drags in a runtime dependency the
 rest of the library does not need — add them if and when you want them:

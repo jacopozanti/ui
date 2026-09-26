@@ -21,8 +21,8 @@ function Home() {
 				<p className="mt-3 max-w-2xl text-muted-foreground">
 					shadcn/ui components on the <code className="font-mono">base-vega</code> style
 					— Base UI primitives and Tailwind v4 — shipped as a compiled npm package
-					rather than a registry. {meta.componentCount} components, kept exactly as
-					shadcn publishes them.
+					rather than a registry, and animated with Motion. {meta.componentCount} components, each
+					moving in its own way on one shared set of timings.
 				</p>
 				<div className="mt-6 flex flex-wrap gap-3">
 					<Link
