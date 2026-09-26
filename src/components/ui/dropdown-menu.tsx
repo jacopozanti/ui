@@ -120,7 +120,29 @@ function DropdownMenuItem({
 }
 
 function DropdownMenuSub({ ...props }: MenuPrimitive.SubmenuRoot.Props) {
-  return <MenuPrimitive.SubmenuRoot data-slot="dropdown-menu-sub" {...props} />
+  // Its own provider, so the submenu's popup never reaches for the parent
+  // menu's actions ref. Measured, not assumed: calling the parent's
+  // `unmount()` while it is open turns out to be a no-op, so this changes
+  // nothing visible today — it keeps each popup talking to its own root.
+  //
+  // Known limit: submenus still close without an exit animation. Base UI
+  // unmounts them on its own schedule, with or without this ref.
+  return (
+    <MotionOverlayProvider>
+      <DropdownMenuSubRoot {...props} />
+    </MotionOverlayProvider>
+  )
+}
+
+function DropdownMenuSubRoot({ ...props }: MenuPrimitive.SubmenuRoot.Props) {
+  const actionsRef = useOverlayActionsRef<MenuPrimitive.Root.Actions>()
+  return (
+    <MenuPrimitive.SubmenuRoot
+      data-slot="dropdown-menu-sub"
+      actionsRef={actionsRef}
+      {...props}
+    />
+  )
 }
 
 function DropdownMenuSubTrigger({
@@ -158,7 +180,7 @@ function DropdownMenuSubContent({
   return (
     <DropdownMenuContent
       data-slot="dropdown-menu-sub-content"
-      className={cn("w-auto min-w-[96px] rounded-md bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95", className )}
+      className={cn("w-auto min-w-[96px] rounded-md bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/10", className )}
       align={align}
       alignOffset={alignOffset}
       side={side}

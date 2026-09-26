@@ -135,8 +135,28 @@ function ContextMenuItem({
 }
 
 function ContextMenuSub({ ...props }: ContextMenuPrimitive.SubmenuRoot.Props) {
+  // Its own provider, so the submenu's popup never reaches for the parent
+  // menu's actions ref. Measured, not assumed: calling the parent's
+  // `unmount()` while it is open turns out to be a no-op, so this changes
+  // nothing visible today — it keeps each popup talking to its own root.
+  //
+  // Known limit: submenus still close without an exit animation. Base UI
+  // unmounts them on its own schedule, with or without this ref.
   return (
-    <ContextMenuPrimitive.SubmenuRoot data-slot="context-menu-sub" {...props} />
+    <MotionOverlayProvider>
+      <ContextMenuSubRoot {...props} />
+    </MotionOverlayProvider>
+  )
+}
+
+function ContextMenuSubRoot({ ...props }: ContextMenuPrimitive.SubmenuRoot.Props) {
+  const actionsRef = useOverlayActionsRef<ContextMenuPrimitive.Root.Actions>()
+  return (
+    <ContextMenuPrimitive.SubmenuRoot
+      data-slot="context-menu-sub"
+      actionsRef={actionsRef}
+      {...props}
+    />
   )
 }
 

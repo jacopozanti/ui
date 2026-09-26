@@ -7,6 +7,9 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuShortcut,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
 } from "@jacopozanti/ui";
 
@@ -27,6 +30,14 @@ export default function Demo() {
 						<DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
 					</DropdownMenuItem>
 					<DropdownMenuItem>Settings</DropdownMenuItem>
+					<DropdownMenuSub>
+						<DropdownMenuSubTrigger>Theme</DropdownMenuSubTrigger>
+						<DropdownMenuSubContent>
+							<DropdownMenuItem>Light</DropdownMenuItem>
+							<DropdownMenuItem>Dark</DropdownMenuItem>
+							<DropdownMenuItem>System</DropdownMenuItem>
+						</DropdownMenuSubContent>
+					</DropdownMenuSub>
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem variant="destructive">Sign out</DropdownMenuItem>
