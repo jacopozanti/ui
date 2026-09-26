@@ -2,6 +2,14 @@ import * as React from "react"
 import { Combobox as ComboboxPrimitive } from "@base-ui/react"
 import { cn } from "cn"
 
+import {
+  MotionOverlayProvider,
+  MotionPopup,
+  forMotion,
+  spring,
+  useOverlayActionsRef,
+} from "@/lib/motion"
+
 import { Button } from "@/components/ui/button"
 import {
   InputGroup,
@@ -11,7 +19,27 @@ import {
 } from "@/components/ui/input-group"
 import { ChevronDownIcon, XIcon, CheckIcon } from "lucide-react"
 
-const Combobox = ComboboxPrimitive.Root
+/*
+ * A function rather than shadcn's alias, because the root needs a provider
+ * around it. The alias carried the three generics through for free; they are
+ * restated here so `Combobox<Value>` keeps the type of its value and items.
+ */
+function Combobox<Value, Multiple extends boolean | undefined = false, Item = Value>(
+  props: ComboboxPrimitive.Root.Props<Value, Multiple, Item>
+) {
+  return (
+    <MotionOverlayProvider>
+      <ComboboxRoot {...props} />
+    </MotionOverlayProvider>
+  )
+}
+
+function ComboboxRoot<Value, Multiple extends boolean | undefined = false, Item = Value>(
+  props: ComboboxPrimitive.Root.Props<Value, Multiple, Item>
+) {
+  const actionsRef = useOverlayActionsRef<ComboboxPrimitive.Root.Actions>()
+  return <ComboboxPrimitive.Root actionsRef={actionsRef} {...props} />
+}
 
 function ComboboxValue({ ...props }: ComboboxPrimitive.Value.Props) {
   return <ComboboxPrimitive.Value data-slot="combobox-value" {...props} />
@@ -108,7 +136,15 @@ function ComboboxContent({
         <ComboboxPrimitive.Popup
           data-slot="combobox-content"
           data-chips={!!anchor}
-          className={cn("group/combobox-content relative max-h-(--available-height) w-(--anchor-width) max-w-(--available-width) min-w-[calc(var(--anchor-width)+--spacing(7))] origin-(--transform-origin) overflow-hidden rounded-md bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[chips=true]:min-w-(--anchor-width) data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 *:data-[slot=input-group]:m-1 *:data-[slot=input-group]:mb-0 *:data-[slot=input-group]:h-8 *:data-[slot=input-group]:border-input/30 *:data-[slot=input-group]:bg-input/30 *:data-[slot=input-group]:shadow-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95", className )}
+          className={cn("group/combobox-content relative max-h-(--available-height) w-(--anchor-width) max-w-(--available-width) min-w-[calc(var(--anchor-width)+--spacing(7))] origin-(--transform-origin) overflow-hidden rounded-md bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 data-[chips=true]:min-w-(--anchor-width) *:data-[slot=input-group]:m-1 *:data-[slot=input-group]:mb-0 *:data-[slot=input-group]:h-8 *:data-[slot=input-group]:border-input/30 *:data-[slot=input-group]:bg-input/30 *:data-[slot=input-group]:shadow-none", className )}
+          render={(renderProps, state) => (
+            <MotionPopup
+              {...forMotion(renderProps)}
+              open={state.open}
+              side={state.side}
+              transition={spring.soft}
+            />
+          )}
           {...props}
         />
       </ComboboxPrimitive.Positioner>

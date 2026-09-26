@@ -3,9 +3,38 @@
 import * as React from "react"
 import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "cn"
+
+import {
+  MotionOverlayProvider,
+  MotionPopup,
+  forMotion,
+  spring,
+  useOverlayActionsRef,
+} from "@/lib/motion"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
-const Select = SelectPrimitive.Root
+/*
+ * A function, not the `const Select = SelectPrimitive.Root` alias shadcn ships:
+ * the root now needs a provider around it. The alias existed to carry the
+ * generics through for free, so they are restated here — without them
+ * `Select<Value>` would lose the type of its value.
+ */
+function Select<Value, Multiple extends boolean | undefined = false>(
+  props: SelectPrimitive.Root.Props<Value, Multiple>
+) {
+  return (
+    <MotionOverlayProvider>
+      <SelectRoot {...props} />
+    </MotionOverlayProvider>
+  )
+}
+
+function SelectRoot<Value, Multiple extends boolean | undefined = false>(
+  props: SelectPrimitive.Root.Props<Value, Multiple>
+) {
+  const actionsRef = useOverlayActionsRef<SelectPrimitive.Root.Actions>()
+  return <SelectPrimitive.Root actionsRef={actionsRef} {...props} />
+}
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (
@@ -82,7 +111,18 @@ function SelectContent({
         <SelectPrimitive.Popup
           data-slot="select-content"
           data-align-trigger={alignItemWithTrigger}
-          className={cn("relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-md bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95", className )}
+          className={cn("relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-md bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10", className )}
+          render={(renderProps, state) => (
+            <MotionPopup
+              {...forMotion(renderProps)}
+              open={state.open}
+              side={state.side}
+              transition={spring.soft}
+              // Aligned over the trigger, the chosen item already sits where
+              // the button was: scaling or sliding it in would look like a jump.
+              fadeOnly={alignItemWithTrigger}
+            />
+          )}
           {...props}
         >
           <SelectScrollUpButton />

@@ -172,15 +172,30 @@ export function MotionPopup({
   open,
   side,
   transition,
+  fadeOnly = false,
   ...props
 }: React.ComponentProps<typeof motion.div> & {
   open: boolean
   side: string
   transition?: Transition
+  /**
+   * Opacity only, no scale and no offset. For a popup positioned so that its
+   * content lines up with the trigger — a select whose chosen item sits
+   * exactly over the button — where any movement would read as a jump.
+   */
+  fadeOnly?: boolean
 }) {
   const overlay = useOverlayMotion(open)
-  const variants = React.useMemo(() => popupVariants(side, transition), [side, transition])
+  const variants = React.useMemo(
+    () => (fadeOnly ? fadeVariants : popupVariants(side, transition)),
+    [fadeOnly, side, transition],
+  )
   return <motion.div {...props} {...overlay} variants={variants} />
+}
+
+const fadeVariants: Variants = {
+  open: { opacity: 1, transition: { duration: 0.1 } },
+  closed: { opacity: 0, transition: exitFast },
 }
 
 /**
