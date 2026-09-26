@@ -2,7 +2,10 @@
 
 import { Radio as RadioPrimitive } from "@base-ui/react/radio"
 import { RadioGroup as RadioGroupPrimitive } from "@base-ui/react/radio-group"
+import { motion } from "motion/react"
 import { cn } from "cn"
+
+import { exitFast, spring } from "@/lib/motion"
 
 function RadioGroup({ className, ...props }: RadioGroupPrimitive.Props) {
   return (
@@ -25,11 +28,25 @@ function RadioGroupItem({ className, ...props }: RadioPrimitive.Root.Props) {
       {...props}
     >
       <RadioPrimitive.Indicator
+        // Kept mounted so the dot can shrink away when another option is chosen.
+        keepMounted
         data-slot="radio-group-indicator"
         className="flex size-4 items-center justify-center"
-      >
-        <span className="absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-foreground" />
-      </RadioPrimitive.Indicator>
+        render={(renderProps, state) => (
+          <span {...renderProps}>
+            <motion.span
+              className="absolute top-1/2 left-1/2 size-2 rounded-full bg-primary-foreground"
+              // Centered through Motion rather than `-translate-x-1/2`: the scale
+              // below is a transform too, and Motion composes x, y and scale into
+              // one — a Tailwind translate would be overwritten by it.
+              style={{ x: "-50%", y: "-50%" }}
+              initial={false}
+              animate={{ scale: state.checked ? 1 : 0 }}
+              transition={state.checked ? spring.bouncy : exitFast}
+            />
+          </span>
+        )}
+      />
     </RadioPrimitive.Root>
   )
 }
