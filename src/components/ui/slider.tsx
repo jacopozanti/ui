@@ -1,5 +1,8 @@
 import { Slider as SliderPrimitive } from "@base-ui/react/slider"
+import { motion } from "motion/react"
 import { cn } from "cn"
+
+import { forMotion, spring } from "@/lib/motion"
 
 function Slider({
   className,
@@ -41,6 +44,22 @@ function Slider({
             data-slot="slider-thumb"
             key={index}
             className="block size-4 shrink-0 rounded-full border border-primary bg-white shadow-sm ring-ring/50 transition-[color,box-shadow] select-none hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
+            /*
+             * The thumb grows while it is held — scale only. Its position must
+             * track the pointer exactly, so it is never animated: any easing
+             * there would make the value lag the hand. Scaling is safe to add
+             * because Base UI centres the thumb with the CSS `translate`
+             * property, which composes with the `transform` Motion writes
+             * rather than being overwritten by it.
+             */
+            render={(renderProps) => (
+              <motion.div
+                {...forMotion(renderProps)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 1.25 }}
+                transition={spring.snappy}
+              />
+            )}
           />
         ))}
       </SliderPrimitive.Control>

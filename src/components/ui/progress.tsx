@@ -1,5 +1,8 @@
 import { Progress as ProgressPrimitive } from "@base-ui/react/progress"
+import { motion } from "motion/react"
 import { cn } from "cn"
+
+import { forMotion, spring } from "@/lib/motion"
 
 function Progress({
   className,
@@ -42,7 +45,27 @@ function ProgressIndicator({
   return (
     <ProgressPrimitive.Indicator
       data-slot="progress-indicator"
-      className={cn("h-full bg-primary transition-all", className)}
+      className={cn("h-full bg-primary", className)}
+      render={(renderProps) => {
+        /*
+         * Base UI writes the fill as an inline `width: 62%`. Motion takes that
+         * value over and eases to it, so a jump from 20% to 80% travels instead
+         * of snapping. On `linear`, not a spring: a spring would overshoot, and
+         * a progress bar reading past its own value — past 100% at the end —
+         * is simply wrong.
+         */
+        const { style, ...rest } = forMotion(renderProps) as typeof renderProps
+        const width = style?.width
+        return (
+          <motion.div
+            {...(rest as React.ComponentProps<typeof motion.div>)}
+            style={{ ...style, width: undefined }}
+            initial={false}
+            animate={{ width }}
+            transition={spring.linear}
+          />
+        )
+      }}
       {...props}
     />
   )

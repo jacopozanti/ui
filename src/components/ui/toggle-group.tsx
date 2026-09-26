@@ -2,7 +2,10 @@ import * as React from "react"
 import { Toggle as TogglePrimitive } from "@base-ui/react/toggle"
 import { ToggleGroup as ToggleGroupPrimitive } from "@base-ui/react/toggle-group"
 import { type VariantProps } from "class-variance-authority"
+import { motion } from "motion/react"
 import { cn } from "cn"
+
+import { forMotion, spring } from "@/lib/motion"
 
 import { toggleVariants } from "@/components/ui/toggle"
 
@@ -76,6 +79,15 @@ function ToggleGroupItem({
           size: context.size || size,
         }),
         className
+      )}
+      render={(renderProps) => (
+        <motion.button
+          {...forMotion(renderProps)}
+          // Not when the items are joined into one bar (spacing 0): scaling one
+          // segment would open a visible gap on either side of it.
+          whileTap={context.spacing === 0 ? undefined : { scale: 0.94 }}
+          transition={spring.snappy}
+        />
       )}
       {...props}
     >
