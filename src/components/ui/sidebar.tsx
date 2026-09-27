@@ -4,7 +4,10 @@ import * as React from "react"
 import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"
+import { motion } from "motion/react"
 import { cn } from "cn"
+
+import { spring } from "@/lib/motion"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
@@ -205,39 +208,80 @@ function Sidebar({
     )
   }
 
+  /*
+   * The collapse is choreography between two elements: the gap, which reserves
+   * width in the page layout so the content beside it reflows, and the fixed
+   * panel, which slides off-canvas or narrows to its icons. If they ever
+   * disagree mid-animation, a sliver of page opens between sidebar and content.
+   *
+   * So Motion animates exactly one thing — `--sb-t`, a bare number, 1 when
+   * expanded and 0 when collapsed — and every width and offset below is derived
+   * from it in CSS. Both elements read the same value on the same frame, which
+   * keeps them in step by construction rather than by matching two timings.
+   *
+   * Not the widths themselves, because Motion cannot interpolate `var()` or
+   * `calc()`: animating to a literal `16rem` would ignore a `--sidebar-width`
+   * the app overrides. Here the app's variables stay the source of the
+   * geometry, and Motion only supplies the tempo.
+   */
+  const padded = variant === "floating" || variant === "inset"
+  const iconGap = padded
+    ? "(var(--sidebar-width-icon) + var(--spacing) * 4)"
+    : "var(--sidebar-width-icon)"
+  const iconPanel = padded
+    ? "(var(--sidebar-width-icon) + var(--spacing) * 4 + 2px)"
+    : "var(--sidebar-width-icon)"
+  const between = (collapsed: string) =>
+    `calc(${collapsed} + (var(--sidebar-width) - ${collapsed}) * var(--sb-t))`
+
+  const gapWidth =
+    collapsible === "icon" ? between(iconGap) : "calc(var(--sidebar-width) * var(--sb-t))"
+  const panelStyle: React.CSSProperties =
+    collapsible === "icon"
+      ? { width: between(iconPanel), [side]: 0 }
+      : {
+          width: "var(--sidebar-width)",
+          // Off-canvas the panel keeps its width and slides out by all of it.
+          [side]: "calc(var(--sidebar-width) * (var(--sb-t) - 1))",
+        }
+
   return (
-    <div
+    <motion.div
       className="group peer hidden text-sidebar-foreground md:block"
       data-state={state}
       data-collapsible={state === "collapsed" ? collapsible : ""}
+      // Constant, unlike `data-collapsible`, which empties the moment the
+      // sidebar starts expanding: what fades with `--sb-t` needs to know the
+      // mode for the whole animation, not just its collapsed end.
+      data-collapsible-mode={collapsible}
       data-variant={variant}
       data-side={side}
       data-slot="sidebar"
+      // `initial={false}`: the first paint, server included, is already at
+      // rest — a sidebar that animates open on every page load would be noise.
+      initial={false}
+      animate={{ "--sb-t": state === "expanded" ? 1 : 0 } as Record<string, number>}
+      transition={spring.soft}
     >
       {/* This is what handles the sidebar gap on desktop */}
       <div
         data-slot="sidebar-gap"
-        className={cn(
-          "relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear",
-          "group-data-[collapsible=offcanvas]:w-0",
-          "group-data-[side=right]:rotate-180",
-          variant === "floating" || variant === "inset"
-            ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)"
-        )}
+        className="relative bg-transparent group-data-[side=right]:rotate-180"
+        style={{ width: gapWidth }}
       />
       <div
         data-slot="sidebar-container"
         data-side={side}
         className={cn(
-          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] md:flex",
+          "fixed inset-y-0 z-10 hidden h-svh md:flex",
           // Adjust the padding for floating and inset variants.
-          variant === "floating" || variant === "inset"
-            ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
+          padded
+            ? "p-2"
+            : "group-data-[side=left]:border-r group-data-[side=right]:border-l",
           className
         )}
         {...props}
+        style={{ ...panelStyle, ...props.style }}
       >
         <div
           data-sidebar="sidebar"
@@ -247,7 +291,7 @@ function Sidebar({
           {children}
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -400,7 +444,7 @@ function SidebarGroupLabel({
     props: mergeProps<"div">(
       {
         className: cn(
-          "flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 ring-sidebar-ring outline-hidden transition-[margin,opacity] duration-200 ease-linear group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
+          "flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 ring-sidebar-ring outline-hidden group-data-[collapsible-mode=icon]:[opacity:var(--sb-t)] group-data-[collapsible-mode=icon]:[margin-top:calc(-2rem*(1-var(--sb-t)))] focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
           className
         ),
       },
