@@ -36,9 +36,10 @@ function RadioGroupItem({ className, ...props }: RadioPrimitive.Root.Props) {
           <span {...renderProps}>
             <motion.span
               className="absolute top-1/2 left-1/2 size-2 rounded-full bg-primary-foreground"
-              // Centered through Motion rather than `-translate-x-1/2`: the scale
-              // below is a transform too, and Motion composes x, y and scale into
-              // one — a Tailwind translate would be overwritten by it.
+              // Centered through Motion's x and y, so the dot's whole geometry —
+              // offset and scale — is one transform in one place. A Tailwind
+              // `-translate-1/2` would also work: v4 compiles it to the separate
+              // `translate` property, which composes with Motion's scale.
               style={{ x: "-50%", y: "-50%" }}
               initial={false}
               animate={{ scale: state.checked ? 1 : 0 }}
