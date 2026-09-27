@@ -1,6 +1,9 @@
 import * as React from "react"
 import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar"
+import { motion, type Variants } from "motion/react"
 import { cn } from "cn"
+
+import { forMotion, spring } from "@/lib/motion"
 
 function Avatar({
   className,
@@ -22,6 +25,16 @@ function Avatar({
   )
 }
 
+/*
+ * The photo develops rather than pops: it fades in and a light blur clears, the
+ * way a picture resolves. Not a scale — the avatar does not clip, so the image
+ * would bulge past its circle while it settled.
+ */
+const developVariants: Variants = {
+  developing: { opacity: 0, filter: "blur(4px)" },
+  developed: { opacity: 1, filter: "blur(0px)", transition: spring.soft },
+}
+
 function AvatarImage({ className, ...props }: AvatarPrimitive.Image.Props) {
   return (
     <AvatarPrimitive.Image
@@ -29,6 +42,21 @@ function AvatarImage({ className, ...props }: AvatarPrimitive.Image.Props) {
       className={cn(
         "aspect-square size-full rounded-full object-cover",
         className
+      )}
+      render={(renderProps, state) => (
+        <motion.img
+          {...forMotion(renderProps)}
+          /*
+           * Only when the image is actually arriving. Base UI mounts one that
+           * was already complete on the first commit — painted before
+           * hydration — without a `starting` phase, precisely so it does not
+           * replay its entrance. Fading it in from nothing there would make
+           * every cached avatar blink on each page load.
+           */
+          initial={state.transitionStatus === "starting" ? "developing" : false}
+          animate="developed"
+          variants={developVariants}
+        />
       )}
       {...props}
     />
