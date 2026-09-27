@@ -201,8 +201,10 @@ const fadeVariants: Variants = {
 /**
  * A centred modal surface: it scales up from just under full size and drifts
  * the last couple of percent upward. Centering lives here, not in a
- * `-translate-x-1/2` class — Motion writes `transform` inline, and a Tailwind
- * translate on the same element is overwritten the moment it animates.
+ * `-translate-x-1/2` class. Tailwind v4 compiles that class to the separate CSS
+ * `translate` property, which Motion's `transform` adds to rather than replaces
+ * — so with the drift animated here as a percentage too, keeping the class would
+ * offset the dialog twice.
  */
 export const modalVariants: Variants = {
   open: { opacity: 1, scale: 1, x: "-50%", y: "-50%", transition: spring.heavy },
