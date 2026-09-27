@@ -1,9 +1,13 @@
+import * as React from "react"
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
+import { motion } from "motion/react"
 import { cn } from "cn"
 
+import { forMotion, spring } from "@/lib/motion"
+
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-md border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-md border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -49,7 +53,31 @@ function Button({
     <ButtonPrimitive
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
+      /*
+       * The press, which used to be `active:translate-y-px`, now a spring. A
+       * caller's own `render` — a button rendered as a link, say — wins, and
+       * simply goes without it.
+       */
+      render={props.render ?? pressable}
       {...props}
+    />
+  )
+}
+
+function pressable(renderProps: React.ComponentPropsWithRef<"button">) {
+  /*
+   * Kept from shadcn: a button that opens something does not dip. Their
+   * `aria-[haspopup]` matches any value, dialog triggers included. The reason
+   * is the anchored ones — a menu or popover positions itself against this
+   * button, and a press would nudge the anchor of a popup opening that instant.
+   */
+  const popup = renderProps["aria-haspopup"]
+  const opensPopup = popup != null && popup !== false && popup !== "false"
+  return (
+    <motion.button
+      {...forMotion(renderProps)}
+      whileTap={opensPopup ? undefined : { scale: 0.97 }}
+      transition={spring.snappy}
     />
   )
 }
